@@ -94,6 +94,8 @@ namespace WpfApp1
         //traer datos de una DB y mostrarlos en el listView
         private void btnTraer_Click(object sender, RoutedEventArgs e)
         {
+            lvUsers.ItemsSource = null;
+            lvUsers.Items.Clear();
             SqlConnection conexion = new SqlConnection("server=localhost\\SQLEXPRESS; database=Usuario; integrated security = true");
             try
             {
@@ -101,10 +103,10 @@ namespace WpfApp1
                 string query = "select * from usuarios";
                 SqlCommand comando = new SqlCommand(query, conexion);
                 SqlDataReader usuario = comando.ExecuteReader();
-                
+
                 while (usuario.Read())
                 { 
-                    users.Add(new User() { Name = usuario["Name"].ToString(), Age = (int)usuario["Age"], Mail = usuario["Mail"].ToString()});                   
+                    users.Add(new User() {ID = (int)usuario["ID"] , Name = usuario["Name"].ToString(), Age = (int)usuario["Age"], Mail = usuario["Mail"].ToString()});                   
                 }
                 lvUsers.ItemsSource = users;
             }
@@ -127,21 +129,30 @@ namespace WpfApp1
         private void BtnEliminar_Click(object sender, RoutedEventArgs e)
         {
             if (lvUsers.SelectedItem != null)
-                users.Remove(lvUsers.SelectedItem as User);
+            {
+                SqlConnection conexion = new SqlConnection("server=localhost\\SQLEXPRESS; database=Usuario; integrated security = true");
+                try
+                {
+                    conexion.Open();
 
-            SqlConnection conexion = new SqlConnection("server=localhost\\SQLEXPRESS; database=Usuario; integrated security = true");
-            try
-            {
-                conexion.Open();
-                string 
-            }
-            catch
-            {
-                MessageBox.Show("No se pudo conectar a DB");
-            }
-            finally
-            {
-                conexion.Close();
+                    var item = lvUsers.SelectedItems[0] as User;
+                    string query = "delete from usuarios where ID=" + item.ID.ToString();
+                    SqlCommand comando = new SqlCommand(query, conexion);
+                    int cant = comando.ExecuteNonQuery();
+                    if(cant == 1)
+                    {
+                        MessageBox.Show("registro borrado de la DB");
+                    }
+                }
+                catch
+                {
+                    MessageBox.Show("No se pudo conectar a DB");
+                }
+                finally
+                {
+                    conexion.Close();
+                }
+                users.Remove(lvUsers.SelectedItem as User);
             }
         }
 
@@ -183,6 +194,7 @@ namespace WpfApp1
 
     public class User
     {
+        public int ID { get; set; }
         public string Name { get; set; }
         public int Age { get; set; }
         public string Mail { get; set; }
